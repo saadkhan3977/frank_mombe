@@ -33,6 +33,6 @@ class Booking extends Model
 
     public function review()
     {
-        return $this->hasOne(\App\Models\Review::class,"id","booking_id");
+        return $this->hasOne(\App\Models\Review::class,"booking_id","id");
     }
 }

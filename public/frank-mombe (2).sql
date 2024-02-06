@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Feb 06, 2024 at 11:52 AM
+-- Generation Time: Feb 06, 2024 at 12:27 PM
 -- Server version: 10.3.39-MariaDB-0ubuntu0.20.04.2
 -- PHP Version: 8.2.12
 
@@ -707,7 +707,7 @@ INSERT INTO `personal_access_tokens` (`id`, `tokenable_type`, `tokenable_id`, `n
 (292, 'App\\Models\\User', 57, 'app_api', '17950b385eb7e3454ee255459fe2c75459661beb06c4deba253083cfaa81df0f', '[\"*\"]', '2024-02-06 19:46:30', NULL, '2024-02-06 19:15:37', '2024-02-06 19:46:30'),
 (293, 'App\\Models\\User', 58, 'app_api', '53c67d03e2fcc11ff75c5acf9f5e98d5915e07b6d239ec98512a6885d067bb42', '[\"*\"]', '2024-02-06 21:20:37', NULL, '2024-02-06 20:06:23', '2024-02-06 21:20:37'),
 (294, 'App\\Models\\User', 57, 'app_api', 'c85e96d2df1c8458f82c2c81506fd9ec325d1b37fa9d68aadf694c0dda7e1346', '[\"*\"]', '2024-02-06 21:26:25', NULL, '2024-02-06 21:20:52', '2024-02-06 21:26:25'),
-(295, 'App\\Models\\User', 58, 'app_api', '72ca636ad840c2642885f0f114a81ecee3f28e3c0fab3c55aeea30ea5077e89c', '[\"*\"]', '2024-02-06 21:51:29', NULL, '2024-02-06 21:27:53', '2024-02-06 21:51:29');
+(295, 'App\\Models\\User', 58, 'app_api', '72ca636ad840c2642885f0f114a81ecee3f28e3c0fab3c55aeea30ea5077e89c', '[\"*\"]', '2024-02-06 22:27:15', NULL, '2024-02-06 21:27:53', '2024-02-06 22:27:15');
 
 -- --------------------------------------------------------
 
@@ -731,7 +731,7 @@ CREATE TABLE `reset_code_passwords` (
 CREATE TABLE `reviews` (
   `id` bigint(20) UNSIGNED NOT NULL,
   `member_id` varchar(255) NOT NULL,
-  `barber_id` int(11) DEFAULT NULL,
+  `booking_id` int(11) DEFAULT NULL,
   `rating` varchar(255) DEFAULT NULL,
   `description` text DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
@@ -742,9 +742,11 @@ CREATE TABLE `reviews` (
 -- Dumping data for table `reviews`
 --
 
-INSERT INTO `reviews` (`id`, `member_id`, `barber_id`, `rating`, `description`, `created_at`, `updated_at`) VALUES
+INSERT INTO `reviews` (`id`, `member_id`, `booking_id`, `rating`, `description`, `created_at`, `updated_at`) VALUES
 (9, '58', 57, '3', 'very nicae keep it up 👍', '2024-01-31 17:47:59', '2024-01-31 17:47:59'),
-(10, '58', NULL, '5', 'amazing', '2024-01-31 19:53:09', '2024-01-31 19:53:09');
+(10, '58', NULL, '5', 'amazing', '2024-01-31 19:53:09', '2024-01-31 19:53:09'),
+(11, '58', NULL, '4', 'my name is bottle', '2024-02-06 22:12:37', '2024-02-06 22:12:37'),
+(12, '58', 143, '3', 'my name is jojo', '2024-02-06 22:23:54', '2024-02-06 22:23:54');
 
 -- --------------------------------------------------------
 
@@ -1193,7 +1195,7 @@ ALTER TABLE `personal_access_tokens`
 -- AUTO_INCREMENT for table `reviews`
 --
 ALTER TABLE `reviews`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `services`
