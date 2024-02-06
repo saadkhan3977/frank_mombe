@@ -8,10 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Booking extends Model
 {
     use HasFactory;
-
     protected $guarded =[];
-
-
     public function barber_info()
     {
         return $this->hasOne(\App\Models\User::class,"id","barber_id");

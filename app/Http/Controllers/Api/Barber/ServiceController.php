@@ -140,11 +140,11 @@ class ServiceController extends BaseController
     {
         if($request->status != 'all')
         {
-            $barberbooking = Booking::with('barber_info','booking_detail','booking_detail.service_info','member_info')->where('status',$request->status)->where('barber_id', Auth::user()->id)->get();
+            $barberbooking = Booking::with('review','barber_info','booking_detail','booking_detail.service_info','member_info')->where('status',$request->status)->where('barber_id', Auth::user()->id)->get();
         }
         else
         {
-            $barberbooking = Booking::with('barber_info','booking_detail','booking_detail.service_info','member_info')->where('barber_id', Auth::user()->id)->get();
+            $barberbooking = Booking::with('review','barber_info','booking_detail','booking_detail.service_info','member_info')->where('barber_id', Auth::user()->id)->get();
         }
         return response()->json(['success'=>true,'barber_booking_list'=> $barberbooking],200);
     }
