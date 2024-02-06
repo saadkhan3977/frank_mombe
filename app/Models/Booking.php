@@ -30,4 +30,9 @@ class Booking extends Model
     {
         return $this->hasOne(\App\Models\User::class,"id","member_id");
     }
+
+    public function review()
+    {
+        return $this->hasOne(\App\Models\Review::class,"id","booking_id");
+    }
 }

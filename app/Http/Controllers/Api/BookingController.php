@@ -103,11 +103,11 @@ class BookingController extends BaseController
     {
         if($request->status != 'all')
         {
-            $data = Booking::with('barber_info','booking_detail','booking_detail.service_info','member_info')->where('status',$request->status)->where('member_id', Auth::user()->id)->get();
+            $data = Booking::with('review','barber_info','booking_detail','booking_detail.service_info','member_info')->where('status',$request->status)->where('member_id', Auth::user()->id)->get();
         }
         else
         {
-            $data = Booking::with('barber_info','booking_detail', 'booking_detail.service_info','member_info')->where('member_id',Auth::user()->id)->get();
+            $data = Booking::with('review','barber_info','booking_detail', 'booking_detail.service_info','member_info')->where('member_id',Auth::user()->id)->get();
         }
         return $this->sendResponse($data,'Booking List');
     }

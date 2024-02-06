@@ -16,6 +16,7 @@ class ReviewController extends Controller
         try{
             $data = Review::create([
                 'member_id' => Auth::user()->id,
+                'booking_id' => $request->input('booking_id'),
                 'rating' => $request->input('rating'),
                 'description'=> $request->input('description'),
             ]);
