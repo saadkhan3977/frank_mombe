@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\BaseController as BaseController;
 
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\UserTemporaryAddress;
 use App\Models\ServiceTiming;
 use App\Models\Service;
 use App\Models\Notification;
@@ -82,7 +83,8 @@ class UserController extends BaseController
 	
 	public function barber_filter(Request $request)
 	{
-        $user = User::where('role','barber');
+		
+        $user = User::with('temporary_address')->where('role','barber');
         if($request->featured)
 		{
 			$user->where('featured',1);
@@ -93,20 +95,37 @@ class UserController extends BaseController
 		}
 		$latitude = Auth::user()->lat;
 		$longitude = Auth::user()->lng;
-		$radius = 10;
+		$radius = 20;
 		if($request->near)
 		{
-			$user->select('*')
-			->selectRaw(
-				'( 6371 * acos( cos( radians(?) ) *
-				   cos( radians( lat ) )
-				   * cos( radians( lng ) - radians(?)
-				   ) + sin( radians(?) ) *
-				   sin( radians( lat ) ) )
-				 ) AS distance', [$latitude, $longitude, $latitude])
-			->havingRaw("distance < ?", [$radius])
-			->orderBy("distance", 'asc');
+			$radius = 10;
 		}
+		
+		$user->select('users.*', 'b.lat as blat', 'b.lng as blng')
+		->selectRaw("
+			CASE 
+				WHEN travel_mode = 0 THEN
+					(6371 * acos( cos( radians(?) ) *
+						cos( radians( users.lat ) ) *
+						cos( radians( users.lng ) - radians(?)
+						) + sin( radians(?) ) *
+						sin( radians( users.lat ) ) )
+					)
+				WHEN travel_mode = 1 THEN 
+					(6371 * acos( cos( radians(?) ) *
+						cos( radians( b.lat ) ) *
+						cos( radians( b.lng ) - radians(?)
+						) + sin( radians(?) ) *
+						sin( radians( b.lat ) ) )
+					)  
+				ELSE 0
+			END as distance
+		", [$latitude, $longitude, $latitude, $latitude, $longitude, $latitude])
+		->havingRaw("distance < ?", [$radius])
+		->join("user_temporary_address as b", "users.id", "=", "b.user_id")
+		->orderBy("distance", 'asc')
+		->get();
+
 		$users = $user->get();
 		return response()->json(['success'=>true,'users'=> $users],200);
     }
@@ -138,7 +157,7 @@ class UserController extends BaseController
 
     public function barber_detail($id)
     {
-        $user = User::with('services', 'review','review.customer_info', 'service_timing')->find($id);
+        $user = User::with('services', 'review','review.member_info', 'service_timing')->find($id);
         return response()->json(['success'=>true,'message'=> 'Barber detail','user_detail'=> $user],200);
     }
 
@@ -212,12 +231,22 @@ class UserController extends BaseController
 			]);
 			if($validator->fails())
 			{
-				return $this->sendError($validator->errors()->first());
+				return $this->sendError($validator->errors()->first(),500);
 
 			}
+			// print_r($request->all());die;
+			// $request->address['lat'];
+			$olduser->first_name = $request->first_name;
+			$olduser->last_name = $request->last_name;
+			$olduser->email = $request->email;
+			$olduser->travel_mode = $request->travel_mode;
+			$olduser->holiday_mode = $request->holiday_mode;
+			$olduser->rush_service = $request->rush_service;
+			$olduser['location'] = $request->address_name;
+			$olduser['lat'] = $request->address_lat;
+			$olduser['lng'] = $request->address_lng;
+
 			$profile = $olduser->photo;
-
-
 			if($request->hasFile('photo'))
 			{
 				$file = request()->file('photo');
@@ -225,15 +254,41 @@ class UserController extends BaseController
 				$file->move('uploads/user/profiles/', $fileName);
 				$profile = asset('uploads/user/profiles/'.$fileName);
 			}
-			$olduser->first_name = $request->first_name;
-			$olduser->last_name = $request->last_name;
-			$olduser->email = $request->email;
 			$olduser->photo = $profile;
+
+
 			$olduser->save();
 
+			if($request->travel_mode == 1)
+			{
+				$temporaryAddress = UserTemporaryAddress::where('user_id','id',Auth::user()->id)->first();
+				if($temporaryAddress)
+				{
+					$temporaryAddress->name = $request->temporary_address_name;
+					$temporaryAddress->lat = $request->temporary_address_lat;
+					$temporaryAddress->lng = $request->temporary_address_lng;
+					$temporaryAddress->update();
+				}
+				else
+				{
+					UserTemporaryAddress::create([
+						'user_id' => Auth::user()->id,
+						'name' => $request->temporary_address_name,
+						'lat' => $request->temporary_address_lat,
+						'lng' => $request->temporary_address_lng,
+					]);
+				}
+				$user = User::with('wallet','temporary_address')->find(Auth::user()->id);
+			}
+			else if($request->travel_mode == 0)
+			{
+				$temporaryAddress = UserTemporaryAddress::where('user_id',Auth::user()->id)->first();
+				($temporaryAddress) ? $temporaryAddress->delete() : null ;
+				$user = User::find(Auth::user()->id);
+
+			}
 
 
-			$user = User::find(Auth::user()->id);
 
 			return response()->json(['success'=>true,'message'=>'Profile Updated Successfully','user_info'=>$user]);
 		}

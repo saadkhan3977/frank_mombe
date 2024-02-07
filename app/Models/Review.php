@@ -14,7 +14,7 @@ class Review extends Model
         return $this->belongsTo(User::class,'barber_id');
     }
 	
-	public function customer_info()
+	public function member_info()
     {
         return $this->belongsTo(User::class,'member_id');
     }

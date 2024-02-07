@@ -64,9 +64,14 @@ class User extends Authenticatable
     {
         return $this->hasOne(Wishlist::class,'barber_id');
     }
+    
+    public function temporary_address()
+    {
+        return $this->hasOne(UserTemporaryAddress::class,'user_id');
+    }
     public function review()
     {
-        return $this->hasMany(Review::class,'barber_id','id');
+        return $this->hasMany(Review::class,'barber_id');
     }
 
     public function user_card()

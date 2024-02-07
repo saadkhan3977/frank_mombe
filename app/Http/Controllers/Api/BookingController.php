@@ -5,8 +5,10 @@ use App\Http\Controllers\Api\BaseController as BaseController;
 
 use App\Models\Booking;
 use App\Models\User;
+use App\Models\Wallet;
 use App\Http\Controllers\Controller;
 use App\Models\BookingDetail;
+use App\Models\Tranasaction;
 use Illuminate\Http\Request;
 use Validator;
 use Auth;
@@ -63,29 +65,51 @@ class BookingController extends BaseController
             // $input = $request->except(['_token'],$request->all());
 
             $total = $request->input('price') - $request->input('dis_price');
-
-            $data = Booking::create([
-                'member_id' => Auth::user()->id,
-                'barber_id' => $request->input('barber_id'),
-                'service_time_id' => $request->input('service_time_id'),
-                'booking_time' => $request->input('booking_time'),
-                'booking_date'=> $request->input('booking_date'),
-                'price'=> $request->input('price'),
-                'dis_price'=> $request->input('dis_price'),
-                'total_price' => $total,
-                'image' => $profile,
-                'custom_location'=> $request->input('custom_location'),
-                'status' => 'pending',
-            ]);
-
-            foreach($request->service_id as $service)
+            
+            $wallet = Wallet::where('user_id',Auth::user()->id)->first();
+            if($wallet->amount < $total)
             {
-                BookingDetail::create([
-                    'booking_id' => $data->id,
-                    'service_id' => $service,
-                ]);
+                return response()->json(['success'=>false,'message'=>'Insufficient credits please buy some & order again']);
             }
-            return response()->json(['success'=>true,'message'=>'Your Booking has been Sent']);
+            else
+            {
+                $data = Tranasaction::create([
+                    'user_id' => Auth::user()->id,
+                    'amount' => $total,
+                    //'date' => $request->date,
+                    'reason' => 'for barber booking',
+                    'type' => 'debit',
+                    //'pm_id' => $customer->id,
+                    //'status' => 'Pending',
+                ]);
+
+                $wallet->amount = $wallet->amount - $total;
+                $wallet->save();
+
+                $data = Booking::create([
+                    'member_id' => Auth::user()->id,
+                    'barber_id' => $request->input('barber_id'),
+                    'service_time_id' => $request->input('service_time_id'),
+                    'booking_time' => $request->input('booking_time'),
+                    'booking_date'=> $request->input('booking_date'),
+                    'price'=> $request->input('price'),
+                    'dis_price'=> $request->input('dis_price'),
+                    'total_price' => $total,
+                    'image' => $profile,
+                    'custom_location'=> $request->input('custom_location'),
+                    'status' => 'pending',
+                ]);
+    
+                foreach($request->service_id as $service)
+                {
+                    BookingDetail::create([
+                        'booking_id' => $data->id,
+                        'service_id' => $service,
+                    ]);
+                }
+                $user = User::with('wallet','temporary_address')->find(Auth::user()->id);
+                return response()->json(['success'=>true,'message'=>'Your Booking has been Sent','user_info'=>$user]);
+            }
 
         }
         catch(\Exception $e)

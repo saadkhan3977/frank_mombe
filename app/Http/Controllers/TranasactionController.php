@@ -181,7 +181,7 @@ class TranasactionController extends Controller
             
             
 
-            $user = User::with(['wallet'])->where('id',Auth::user()->id)->first();
+            $user = User::with('wallet','temporary_address')->where('id',Auth::user()->id)->first();
             return response()->json(['success'=>true,'message' => 'Tranasaction SuccessFully','data'=> $data,'user_info'=>$user]);
             
         } catch (\Stripe\Error\Card $e) {

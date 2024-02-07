@@ -16,6 +16,7 @@ class SupportController extends BaseController
 
         try{
             $validator = Validator::make($request->all(), [
+             //   'job_id' => 'required',
                 'name' => 'required|string',
                 'phone' => 'required|numeric',
                 'email' =>'required|email',
@@ -29,6 +30,7 @@ class SupportController extends BaseController
             $input = $request->except(['_token'],$request->all());
             $data = Support::create([
                 'user_id' => Auth::user()->id,
+                'job_id' => $request->input('job_id'),
                 'name' => $request->input('name'),
                 'phone'=> $request->input('phone'),
                 'email'=> $request->input('email'),

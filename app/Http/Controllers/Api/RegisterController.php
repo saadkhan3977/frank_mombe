@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Api\BaseController as BaseController;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\UserTemporaryAddress;
 use App\Models\Payment;
 use App\Models\Goal;
 use App\Models\Child;
@@ -34,6 +35,7 @@ class RegisterController extends BaseController
             'email' => 'required|email|unique:users',
             'phone' => 'required|numeric|unique:users',
             'password' => 'required|min:8',
+            //'address' => 'required',
             'confirm_password' => 'required|same:password',
             'role' => 'required|string',
 			'photo' => 'image|mimes:jpeg,png,jpg,bmp,gif,svg|max:2048',
@@ -43,7 +45,16 @@ class RegisterController extends BaseController
 		 return $this->sendError($validator->errors()->first());
 
         }
-		$profile = null;
+		
+        $input = $request->except(['confirm_password'],$request->all());
+        $input['password'] = bcrypt($input['password']);
+		$input['email_verified_at'] = Carbon::now();
+        $input['location'] = $request->address_name;
+		$input['lat'] = $request->address_lat;
+		$input['lng'] = $request->address_lng;
+
+		//$input['email_code'] = mt_rand(9000, 9999);
+        $profile = null;
         if($request->hasFile('photo'))
         {
             $file = request()->file('photo');
@@ -51,17 +62,55 @@ class RegisterController extends BaseController
             $file->move('uploads/user/profiles/', $fileName);
             $profile = asset('uploads/user/profiles/'.$fileName);
         }
-        $input = $request->except(['confirm_password'],$request->all());
-        $input['password'] = bcrypt($input['password']);
         $input['photo'] = $profile;
-		$input['email_verified_at'] = Carbon::now();
-		//$input['email_code'] = mt_rand(9000, 9999);
-        $user = User::create($input);
+
+        $user = User::create([
+            'password' => bcrypt('password'),
+            'email_verified_at' => Carbon::now(),
+            'first_name' => $request->first_name,
+            'last_name' => $request->last_name,
+            'email' => $request->email,
+            'phone' => $request->phone,
+            'role' => $request->role,
+            'photo' => $profile,
+            'travel_mode' => 0,
+            'holiday_mode' => 0,
+            'rush_service' => 0,
+            'location' => $request->address_name,
+            'lat' => $request->address_lat,
+            'lng' => $request->address_lng,
+        ]);
+
+        Wallet::create([
+            'user_id' => $user->id,
+            'amount' => 0
+        ]);
+
+        if($request->travel_mode == 1)
+			{
+				$temporaryAddress = UserTemporaryAddress::where('user_id','id',$user->id)->first();
+				if($temporaryAddress)
+				{
+					$temporaryAddress->name = $request->temporary_address_name;
+					$temporaryAddress->lat = $request->temporary_address_lat;
+					$temporaryAddress->lng = $request->temporary_address_lng;
+					$temporaryAddress->save();
+				}
+				else
+				{
+					UserTemporaryAddress::create([
+						'user_id' => $user->id,
+						'name' => $request->temporary_address_name,
+						'lat' => $request->temporary_address_lat,
+						'lng' => $request->temporary_address_lng,
+					]);
+				}
+			}
 
 
 //        Mail::to($user->email)->send(new SendVerifyCode($input['email_code']));
         $token =  $user->createToken('app_api')->plainTextToken;
-		$users = User::where('id',$user->id)->first();
+		$users = User::with('wallet','temporary_address')->where('id',$user->id)->first();
 		return response()->json(['success'=>true,'message'=>'User register successfully' ,'token'=>$token,'user_info'=>$users]);
     }
 
@@ -76,7 +125,7 @@ class RegisterController extends BaseController
             if($validator->fails()){
 				return $this->sendError($validator->errors()->first());
             }
-            $user = User::firstWhere('email',$request->email);
+            $user = User::with('wallet','temporary_address')->firstWhere('email',$request->email);
 
 
             // if($user->email_verified_at != null)
@@ -149,24 +198,26 @@ class RegisterController extends BaseController
     }
     public function change_password(Request $request)
     {
-      try{
-      $validator = Validator::make($request->all(),[
-          'current_password' => 'required',
-          'new_password' => 'required|same:confirm_password|min:8',
-          'confirm_password' => 'required',
-      ]);
-      if($validator->fails()){
-        return $this->sendError($validator->errors()->first());
-        }
-        $user = Auth::user();
+        try
+        {
+            $validator = Validator::make($request->all(),[
+                'current_password' => 'required',
+                'new_password' => 'required|same:confirm_password|min:8',
+                'confirm_password' => 'required',
+            ]);
+            if($validator->fails()){
+                return $this->sendError($validator->errors()->first());
+                }
+                $user = Auth::user();
 
-      if (!Hash::check($request->current_password,$user->password)) {
-        return $this->sendError(['error'=>'Current Password Not Matched']);
-      }
-      $user->password = Hash::make($request->new_password);
-      $user->save();
-      return response()->json(['success'=>true,'message'=>'Password Successfully Changed','user_info'=>$user]);
-         }catch(\Eception $e){
+            if (!Hash::check($request->current_password,$user->password)) {
+                return $this->sendError(['error'=>'Current Password Not Matched']);
+            }
+            $user->password = Hash::make($request->new_password);
+            $user->save();
+            return response()->json(['success'=>true,'message'=>'Password Successfully Changed','user_info'=>$user]);
+        }
+        catch(\Eception $e){
            return $this->sendError($e->getMessage());
         }
     }
