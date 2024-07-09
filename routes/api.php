@@ -73,6 +73,7 @@ Route::group(['middleware' => ['api','auth:api'], 'prefix' => 'auth'], function 
     Route::get('barber/detail/{id}', [\App\Http\Controllers\Api\UserController::class, 'barber_detail']);
     Route::post('barber/available_services/{id}', [\App\Http\Controllers\Api\UserController::class, 'barber_available_services']);
     Route::post('booking', [\App\Http\Controllers\Api\BookingController::class, 'booking']);
+    Route::get('cancel_booking/{bookingid}', [\App\Http\Controllers\Api\BookingController::class, 'cancel_booking']);
     Route::post('review', [\App\Http\Controllers\Api\ReviewController::class, 'review']);
     Route::post('filter/service', [\App\Http\Controllers\Api\BookingController::class, 'filter_service']);
     //Route::get('barber/booking/list', [\App\Http\Controllers\Api\BookingController::class, 'barber_booking_list']);

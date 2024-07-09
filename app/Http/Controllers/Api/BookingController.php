@@ -186,4 +186,17 @@ class BookingController extends BaseController
         }
         return $this->sendResponse($data,'Booking List');
     }
+	
+    public function cancel_booking($id)
+    {
+        $booking = Booking::find($id);
+        BookingDetail::where('booking_id',$id)->delete();
+        if($booking)
+        {
+            $booking->delete();
+            // $booking->save();
+        }
+        $booking = null;
+        return $this->sendResponse($booking,'Booking Delete Successfully');
+    }
 }
