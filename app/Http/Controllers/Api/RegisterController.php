@@ -282,7 +282,7 @@ class RegisterController extends BaseController
                 $user = Auth::user();
 
             if (!Hash::check($request->current_password,$user->password)) {
-                return $this->sendError(['error'=>'Current Password Not Matched']);
+                return $this->sendError('Current Password Not Matched');
             }
             $user->password = Hash::make($request->new_password);
             $user->save();
